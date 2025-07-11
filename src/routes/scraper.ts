@@ -1,7 +1,42 @@
+import { Hono } from "hono";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import z from "zod";
 
 puppeteer.use(StealthPlugin());
+
+const ScraperSchemaInput = z.object({
+  url: z.url({
+    message: "Invalid URL format",
+  }),
+  config: z.object({
+    detailLinkSelector: z.string({
+      message: "Detail link selector is required",
+    }),
+    detailLinkTextIncludes: z.string().optional(),
+    isModal: z.boolean().optional(),
+    modalClickSelector: z.string().optional(),
+    modalWaitForSelector: z.string().optional(),
+    fields: z.array(
+      z.object({
+        name: z.string(),
+        selector: z.string().optional(),
+        type: z.enum([
+          "text",
+          "link",
+          "current_url",
+          "clean_current_url",
+          "attr",
+        ]),
+        nthChild: z.number().optional(),
+        keywordIncludes: z.string().optional(),
+        attr: z.string().optional(),
+        joinWith: z.string().optional(),
+        fallbackValue: z.string().optional(),
+      })
+    ),
+  }),
+});
 
 export type ScrapeConfig = {
   detailLinkSelector: string;
@@ -23,14 +58,18 @@ export type ScrapeConfig = {
 
 type ScrapeResult = Record<string, string | null>;
 
-export async function dynamicScrape(
-  url: string,
-  config: ScrapeConfig
-): Promise<ScrapeResult[]> {
+const scraper = new Hono();
+
+scraper.post("/", async (c) => {
+  const data = await c.req.json();
+
+  const { url, config } = ScraperSchemaInput.parse(data);
+
   const browser = await puppeteer.launch({
     headless: "shell",
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });
+
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "domcontentloaded" });
 
@@ -250,5 +289,12 @@ export async function dynamicScrape(
   }
 
   await browser.close();
-  return results;
-}
+
+  return c.json({
+    ok: true,
+    data: results,
+    total: results.length,
+  });
+});
+
+export default scraper;

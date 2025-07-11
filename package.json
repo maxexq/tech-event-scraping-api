@@ -1,10 +1,12 @@
 {
-  "name": "tech-day-scraping",
-  "version": "1.0.0",
+  "name": "tech-events-scraping",
+  "version": "0.0.1",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "bun run src/index.ts",
+    "dev": "bun run --hot src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +15,7 @@
     "hono": "^4.8.4",
     "puppeteer": "^24.12.1",
     "puppeteer-extra": "^3.3.6",
-    "puppeteer-extra-plugin-stealth": "^2.11.2"
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "zod": "^4.0.5"
   }
 }
